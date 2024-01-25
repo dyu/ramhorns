@@ -243,9 +243,46 @@ mod test {
             ]
         );
     }
+    
+    #[test]
+    fn constructs_nested_conditions_correctly() {
+        let source = "<body><h1>{{title}}</h1>{{?posts}}<p>Something here :)</p>{{/posts}}{{^posts}}<p>Nothing here :(</p>{{/posts}}</body>";
+        let tpl = Template::new(source).unwrap();
+
+        assert_eq!(
+            &tpl.blocks,
+            &[
+                Block::new("<body><h1>", "title", Tag::Escaped),
+                Block::new("</h1>", "posts", Tag::Condition).children(1),
+                Block::nameless("<p>Something here :)</p>", Tag::Closing),
+                Block::new("", "posts", Tag::Inverse).children(1),
+                Block::nameless("<p>Nothing here :(</p>", Tag::Closing),
+                Block::nameless("</body>", Tag::Tail),
+            ]
+        );
+    }
+    
+    #[test]
+    fn constructs_nested_conditions_with_dot_correctly() {
+        let source = "<body><h1>{{site title}}</h1>{{?archive posts}}<article>{{name}}</article>{{/posts archive}}</body>";
+        let tpl = Template::new(source).unwrap();
+
+        assert_eq!(
+            &tpl.blocks,
+            &[
+                Block::new("<body><h1>", "site", Tag::Section).children(1),
+                Block::new("", "title", Tag::Escaped),
+                Block::new("</h1>", "archive", Tag::Section).children(3),
+                Block::new("", "posts", Tag::Condition).children(2),
+                Block::new("<article>", "name", Tag::Escaped),
+                Block::nameless("</article>", Tag::Closing),
+                Block::nameless("</body>", Tag::Tail),
+            ]
+        );
+    }
 
     #[test]
-    fn constructs_nested_sections_with_dot_correctly() {
+    fn constructs_nested_negations_with_dot_correctly() {
         let source = "<body><h1>{{site title}}</h1>{{^archive posts}}<article>{{name}}</article>{{/posts archive}}</body>";
         let tpl = Template::new(source).unwrap();
 

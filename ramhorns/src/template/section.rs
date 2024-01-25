@@ -98,6 +98,15 @@ where
                     )?;
                     index += block.children as usize;
                 }
+                Tag::Condition => {
+                    self.contents.render_field_condition(
+                        block.hash,
+                        block.name,
+                        self.slice(index..index + block.children as usize),
+                        encoder,
+                    )?;
+                    index += block.children as usize;
+                }
                 Tag::Inverse => {
                     self.contents.render_field_inverse(
                         block.hash,

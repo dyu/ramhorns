@@ -78,6 +78,22 @@ pub trait ContentSequence: Combine + Sized + Copy {
     {
         Ok(())
     }
+    
+    /// Render a field, by the hash of **or** string its name, as a condition section.
+    #[inline]
+    fn render_field_condition<'section, P, E>(
+        &self,
+        _hash: u64,
+        _name: &str,
+        _section: Section<'section, P>,
+        _encoder: &mut E,
+    ) -> Result<(), E::Error>
+    where
+        P: ContentSequence,
+        E: Encoder,
+    {
+        Ok(())
+    }
 
     /// Render a field, by the hash of **or** string its name, as an inverse section.
     #[inline]
@@ -196,6 +212,28 @@ where
                     self.0.render_field_section(hash, name, section, encoder)?;
                 }
             }
+        }
+        Ok(())
+    }
+    
+    #[inline]
+    fn render_field_condition<P, E>(
+        &self,
+        hash: u64,
+        name: &str,
+        section: Section<P>,
+        encoder: &mut E,
+    ) -> Result<(), E::Error>
+    where
+        P: ContentSequence,
+        E: Encoder,
+    {
+        if !self.3.render_field_condition(hash, name, section, encoder)?
+            && !self.2.render_field_condition(hash, name, section, encoder)?
+            && !self.1.render_field_condition(hash, name, section, encoder)?
+            && !self.0.render_field_condition(hash, name, section, encoder)?
+        {
+            section.render(encoder)?;
         }
         Ok(())
     }

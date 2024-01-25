@@ -36,6 +36,10 @@ pub enum Tag {
     /// `{{#section}}` opening tag (with number of subsequent blocks it contains)
     #[token("{{#")]
     Section,
+    
+    /// `{{?condition}}` section opening tag (with number of subsequent blocks it contains)
+    #[token("{{?")]
+    Condition,
 
     /// `{{^inverse}}` section opening tag (with number of subsequent blocks it contains)
     #[token("{{^")]
@@ -148,7 +152,7 @@ impl<'tpl> Template<'tpl> {
                         self.blocks[tail_idx + i].children = (d - i) as u32;
                     }
                 }
-                Tag::Section | Tag::Inverse => loop {
+                Tag::Section | Tag::Condition | Tag::Inverse => loop {
                     match closing.next() {
                         Some(Ok(Closing::Ident)) => {
                             stack.try_push(self.blocks.len())?;

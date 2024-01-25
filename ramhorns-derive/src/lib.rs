@@ -213,6 +213,12 @@ pub fn content_derive(input: TokenStream) -> TokenStream {
             #hash => self.#field.render_section(section, encoder).map(|_| true),
         }
     });
+    
+    let render_field_condition = fields.iter().map(|Field { field, hash, .. }| {
+        quote! {
+            #hash => self.#field.render_condition(section, encoder).map(|_| true),
+        }
+    });
 
     let render_field_inverse = fields.iter().map(|Field { field, hash, .. }| {
         quote! {
@@ -286,6 +292,20 @@ pub fn content_derive(input: TokenStream) -> TokenStream {
                     #( #render_field_section )*
                     _ => Ok(
                         #( self.#flatten.render_field_section(hash, name, section, encoder)? ||)*
+                        false
+                    )
+                }
+            }
+            
+            fn render_field_condition<P, E>(&self, hash: u64, name: &str, section: ::ramhorns::Section<P>, encoder: &mut E) -> std::result::Result<bool, E::Error>
+            where
+                P: ::ramhorns::traits::ContentSequence,
+                E: ::ramhorns::encoding::Encoder,
+            {
+                match hash {
+                    #( #render_field_condition )*
+                    _ => Ok(
+                        #( self.#flatten.render_field_condition(hash, name, section, encoder)? ||)*
                         false
                     )
                 }

@@ -67,6 +67,24 @@ pub trait Content {
             Ok(())
         }
     }
+    
+    /// Render a section with self.
+    #[inline]
+    fn render_condition<C, E>(
+        &self,
+        section: Section<C>,
+        encoder: &mut E,
+    ) -> Result<(), E::Error>
+    where
+        C: ContentSequence,
+        E: Encoder,
+    {
+        if self.is_truthy() {
+            section.render(encoder)
+        } else {
+            Ok(())
+        }
+    }
 
     /// Render a section with self.
     #[inline]
@@ -118,6 +136,23 @@ pub trait Content {
     /// If successful, returns `true` if the field exists in this content, otherwise `false`.
     #[inline]
     fn render_field_section<C, E>(
+        &self,
+        _hash: u64,
+        _name: &str,
+        _section: Section<C>,
+        _encoder: &mut E,
+    ) -> Result<bool, E::Error>
+    where
+        C: ContentSequence,
+        E: Encoder,
+    {
+        Ok(false)
+    }
+    
+    /// Render a field, by the hash of **or** string its name, as an condition section.
+    /// If successful, returns `true` if the field exists in this content, otherwise `false`.
+    #[inline]
+    fn render_field_condition<C, E>(
         &self,
         _hash: u64,
         _name: &str,
@@ -548,6 +583,23 @@ where
             None => Ok(false),
         }
     }
+    
+    fn render_field_condition<C, E>(
+        &self,
+        _: u64,
+        name: &str,
+        section: Section<C>,
+        encoder: &mut E,
+    ) -> Result<bool, E::Error>
+    where
+        C: ContentSequence,
+        E: Encoder,
+    {
+        match self.get(name) {
+            Some(v) => v.render_condition(section, encoder).map(|_| true),
+            None => Ok(false),
+        }
+    }
 
     fn render_field_inverse<C, E>(
         &self,
@@ -635,6 +687,23 @@ where
             None => Ok(false),
         }
     }
+    
+    fn render_field_condition<C, E>(
+        &self,
+        _: u64,
+        name: &str,
+        section: Section<C>,
+        encoder: &mut E,
+    ) -> Result<bool, E::Error>
+    where
+        C: ContentSequence,
+        E: Encoder,
+    {
+        match self.get(name) {
+            Some(v) => v.render_condition(section, encoder).map(|_| true),
+            None => Ok(false),
+        }
+    }
 
     fn render_field_inverse<C, E>(
         &self,
@@ -690,6 +759,19 @@ macro_rules! impl_pointer_types {
                 {
                     self.deref().render_section(section, encoder)
                 }
+                
+                #[inline]
+                fn render_condition<C, E>(
+                    &self,
+                    section: Section<C>,
+                    encoder: &mut E,
+                ) -> Result<(), E::Error>
+                where
+                    C: ContentSequence,
+                    E: Encoder,
+                {
+                    self.deref().render_condition(section, encoder)
+                }
 
                 #[inline]
                 fn render_inverse<C, E>(
@@ -737,6 +819,21 @@ macro_rules! impl_pointer_types {
                     E: Encoder,
                 {
                     self.deref().render_field_section(hash, name, section, encoder)
+                }
+                
+                #[inline]
+                fn render_field_condition<C, E>(
+                    &self,
+                    hash: u64,
+                    name: &str,
+                    section: Section<C>,
+                    encoder: &mut E,
+                ) -> Result<bool, E::Error>
+                where
+                    C: ContentSequence,
+                    E: Encoder,
+                {
+                    self.deref().render_field_condition(hash, name, section, encoder)
                 }
 
                 #[inline]
