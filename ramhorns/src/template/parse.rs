@@ -186,15 +186,21 @@ impl<'tpl> Template<'tpl> {
                         Ok(())
                     };
 
-                    pop_section(name)?;
+                    //pop_section(name)?;
+                    let mut tmp = vec![name];
                     loop {
                         match closing.next() {
                             Some(Ok(Closing::Ident)) => {
-                                pop_section(closing.slice())?;
+                                //pop_section(closing.slice())?;
+                                tmp.push(closing.slice());
                             }
                             Some(Ok(Closing::Match)) => break,
                             _ => return Err(Error::UnclosedTag),
                         }
+                    }
+                    let t_len = tmp.len();
+                    for i in 0..t_len {
+                        pop_section(tmp[t_len - i - 1])?;
                     }
                 }
                 Tag::Partial => {
